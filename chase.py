@@ -98,7 +98,8 @@ RED = pygame.Color(255, 25, 25)
 BLACK = pygame.Color(0, 0, 0)
 DISPLAYSURF.fill(MYCOLOR)
 
-num_obstacles = 16
+obstacle_scale = 8000
+num_obstacles = (width * height) / obstacle_scale
 
 circles = loadCircles(num_obstacles)
 
