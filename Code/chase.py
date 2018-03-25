@@ -1,4 +1,4 @@
-import pygame, sys, math, random
+import pygame, sys, math, random, time
 from pygame.locals import *
 
 width = 400
@@ -50,7 +50,7 @@ def loadCircles(num_obstacles):
         while temp.x < 100 and temp.y < 100:
             temp = circ(pygame.Color(255, 0, 255), random.randrange(width), \
                 random.randrange(height), 5, temp_dir, \
-                .1 * GLOBAL_SPEED_MODIFIER)
+                .05 * random.uniform(1, 3) * GLOBAL_SPEED_MODIFIER)
         list.append(temp)
     return list
 
@@ -75,6 +75,10 @@ def reset():
     global num_obstacles
     circles = loadCircles(num_obstacles)
 
+    global speed_up
+    speed_up = 1
+    global start_time
+    start_time = time.time()
     global p_x
     p_x = 0
     global p_y
@@ -119,6 +123,10 @@ pygame.init()
 
 DISPLAYSURF = pygame.display.set_mode((width, height))
 
+pygame.mixer.init(22050, -16, 2, 4096)
+pygame.mixer.music.load('.Waveshaper - A Picture in Motion.wav')
+pygame.mixer.music.play(0)
+
 pygame.display.set_caption('CHASE!')
 
 MYCOLOR = pygame.Color(10, 100, 255, 255)
@@ -126,6 +134,8 @@ RED = pygame.Color(255, 25, 25)
 BLACK = pygame.Color(0, 0, 0)
 DISPLAYSURF.fill(MYCOLOR)
 GLOBAL_SPEED_MODIFIER = (width * height) / 120000
+start_time = time.time()
+speed_up = 1
 
 obstacle_scale = 8000
 num_obstacles = (width * height) / obstacle_scale
@@ -152,7 +162,15 @@ slope = 0
 
 GAMEOVER = False
 
+song = ""
+
 while True:
+
+    cur_time = time.time()
+    if cur_time > start_time + 10:
+        start_time = cur_time
+        speed_up += .2
+
     DISPLAYSURF.fill(MYCOLOR)
     # player
     pygame.draw.circle(DISPLAYSURF, RED, (int(p_x), int(p_y)), p_radius, 0)
@@ -203,13 +221,13 @@ while True:
             slope = distance_y / distance_x
 
         if slope == float("inf"):
-            e_y += e_speed
+            e_y += e_speed * speed_up
         elif slope == -float("inf"):
-            e_y -= e_speed
+            e_y -= e_speed * speed_up
         else:
 
-            x_inc = e_speed * math.cos(math.atan(slope))
-            y_inc = e_speed * math.sin(math.atan(slope))
+            x_inc = e_speed * math.cos(math.atan(slope)) * speed_up
+            y_inc = e_speed * math.sin(math.atan(slope)) * speed_up
 
             if distance_x < 0:
                 e_x -= x_inc
