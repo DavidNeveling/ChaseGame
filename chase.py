@@ -1,8 +1,8 @@
 import pygame, sys, math, random
 from pygame.locals import *
 
-width = 400
-height = 300
+width = 800
+height = 600
 
 class circ:
     def __init__(self, color, x, y, rad, dir, speed):
@@ -21,15 +21,19 @@ def loadCircles(num_obstacles):
             temp_dir = "left"
         else:
             temp_dir = "right"
-        temp = circ(pygame.Color(255, 0, 255), random.randrange(width), random.randrange(height), 5, temp_dir, .1)
+        temp = circ(pygame.Color(255, 0, 255), random.randrange(width), \
+            random.randrange(height), 5, temp_dir, .1 * GLOBAL_SPEED_MODIFIER)
         while temp.x < 100 and temp.y < 100:
-            temp = circ(pygame.Color(255, 0, 255), random.randrange(width), random.randrange(height), 5, temp_dir, .1)
+            temp = circ(pygame.Color(255, 0, 255), random.randrange(width), \
+                random.randrange(height), 5, temp_dir, \
+                .1 * GLOBAL_SPEED_MODIFIER)
         list.append(temp)
     return list
 
 def drawCircles(surf, list, update):
     for circ in list:
-        pygame.draw.circle(surf, circ.color, (int(circ.x), int(circ.y)), circ.radius, 0)
+        pygame.draw.circle(surf, circ.color, (int(circ.x), int(circ.y)), \
+            circ.radius, 0)
         if update:
 
             if circ.x < 0:
@@ -62,9 +66,9 @@ def reset():
     e_radius = 10
 
     global p_speed
-    p_speed = .5
+    p_speed = .5 * GLOBAL_SPEED_MODIFIER
     global e_speed
-    e_speed = .2
+    e_speed = .2 * GLOBAL_SPEED_MODIFIER
 
     global left
     left = False
@@ -97,6 +101,7 @@ MYCOLOR = pygame.Color(10, 100, 255, 255)
 RED = pygame.Color(255, 25, 25)
 BLACK = pygame.Color(0, 0, 0)
 DISPLAYSURF.fill(MYCOLOR)
+GLOBAL_SPEED_MODIFIER = (width * height) / 120000
 
 obstacle_scale = 8000
 num_obstacles = (width * height) / obstacle_scale
@@ -111,8 +116,8 @@ e_x = width
 e_y = height
 e_radius = 10
 
-p_speed = .5
-e_speed = .2
+p_speed = .5 * GLOBAL_SPEED_MODIFIER
+e_speed = .2 * GLOBAL_SPEED_MODIFIER
 
 left = False
 right = False
@@ -125,9 +130,12 @@ GAMEOVER = False
 
 while True:
     DISPLAYSURF.fill(MYCOLOR)
-    pygame.draw.circle(DISPLAYSURF, RED, (int(p_x), int(p_y)), p_radius, 0) # player
-    drawCircles(DISPLAYSURF, circles, not GAMEOVER) # obstacles
-    pygame.draw.circle(DISPLAYSURF, BLACK, (int(e_x), int(e_y)), e_radius, 0) # enemy
+    # player
+    pygame.draw.circle(DISPLAYSURF, RED, (int(p_x), int(p_y)), p_radius, 0)
+    # obstacles
+    drawCircles(DISPLAYSURF, circles, not GAMEOVER)
+    # enemy
+    pygame.draw.circle(DISPLAYSURF, BLACK, (int(e_x), int(e_y)), e_radius, 0)
 
     for event in pygame.event.get():
         pressed = pygame.key.get_pressed()
