@@ -1,8 +1,32 @@
 import pygame, sys, math, random
 from pygame.locals import *
 
-width = 800
-height = 600
+width = 400
+height = 300
+
+response = raw_input("Set screen? (y/n)").lower()
+
+if response == "y":
+
+    passed = False
+    width = raw_input("Width = ")
+    while not passed:
+        try:
+            width = int(width)
+            passed = True
+        except:
+            width = raw_input("Width = ")
+
+    passed = False
+    height = raw_input("Height = ")
+    while not passed:
+        try:
+            height = int(height)
+            passed = True
+        except:
+            height = raw_input("Height = ")
+
+
 
 class circ:
     def __init__(self, color, x, y, rad, dir, speed):
@@ -66,7 +90,7 @@ def reset():
     e_radius = 10
 
     global p_speed
-    p_speed = .5 * GLOBAL_SPEED_MODIFIER
+    p_speed = .4 * GLOBAL_SPEED_MODIFIER
     global e_speed
     e_speed = .2 * GLOBAL_SPEED_MODIFIER
 
