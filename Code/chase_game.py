@@ -46,7 +46,6 @@ def main():
             except:
                 HEIGHT = raw_input("Height = ")
 
-
     GLOBAL_SPEED_MODIFIER = (WIDTH * HEIGHT) / 120000
 
     obstacle_scale = 8000
@@ -54,13 +53,13 @@ def main():
 
     obstacles = loadCircles(num_obstacles, GLOBAL_SPEED_MODIFIER)
 
-    PLAYER = circ(vector3D(), vector3D(), vector3D(), 0, 12, \
-                    .4 * GLOBAL_SPEED_MODIFIER, RED)
+    PLAYER = player(vector3D(), vector3D(), vector3D(), 0, 10, \
+                    .4 * GLOBAL_SPEED_MODIFIER)
 
     ENEMY = enemy(vector3D(WIDTH, HEIGHT, 0), vector3D(), vector3D(), \
-                    0, 12, .2 * GLOBAL_SPEED_MODIFIER)
+                    0, 10, .2 * GLOBAL_SPEED_MODIFIER)
 
-    POWER_UP = power_up(vector3D(), vector3D(), vector3D(), 0, 10, .05, YELLOW)
+    POWER_UP = power_up(vector3D(), vector3D(), vector3D(), 0, 8, .05, YELLOW)
 
     BACKGROUND = GREEN
 
@@ -70,7 +69,7 @@ def main():
     pygame.display.set_caption('CHASE!')
 
     pygame.mixer.init(22050, -16, 2, 4096)
-    pygame.mixer.music.load('.Waveshaper - A Picture in Motion.wav')
+    pygame.mixer.music.load('.ChaseGameMusic.wav')
     pygame.mixer.music.play(0)
 
     # DrawWorld(DISPLAYSURF, BACKGROUND, PLAYER, ENEMY, obstacles, power_up)
@@ -78,7 +77,7 @@ def main():
     power_up_spawn = time.time()
     power_up_respawn = random.randrange(7, 14)
     while True:
-        # if not GAMEOVER:
+
         DrawWorld(DISPLAYSURF, BACKGROUND, PLAYER, ENEMY, obstacles, POWER_UP)
 
         if not pygame.mixer.music.get_busy():
@@ -89,14 +88,15 @@ def main():
             enemy_speed_up = cur_time
             ENEMY.speed += .05 * GLOBAL_SPEED_MODIFIER
 
-        if cur_time > power_up_spawn + power_up_respawn:
-            POWER_UP.position = vector3D(random.randrange(0, WIDTH), \
-                random.randrange(0, HEIGHT), 0)
-            POWER_UP.velocity = vector3D(random.randrange(-30, 31), \
-                random.randrange(-30, 31), 0)
-            POWER_UP.available = True
-            power_up_spawn = cur_time
-            power_up_respawn = random.randrange(7, 14)
+        if not POWER_UP.available:
+            if cur_time > power_up_spawn + power_up_respawn:
+                POWER_UP.position = vector3D(random.randrange(0, WIDTH), \
+                    random.randrange(0, HEIGHT), 0)
+                POWER_UP.velocity = vector3D(random.randrange(-30, 31), \
+                    random.randrange(-30, 31), 0)
+                POWER_UP.available = True
+                power_up_spawn = cur_time
+                power_up_respawn = random.randrange(7, 14)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -181,6 +181,10 @@ def DrawWorld(surf, BACKGROUND, player, enemy, obstacles, power_up):
     # player
     pygame.draw.circle(surf, player.color, (int(player.position.x), \
         int(player.position.y)), player.radius, 0)
+    # power up
+    if power_up.available:
+        pygame.draw.circle(surf, power_up.color, (int(power_up.position.x), \
+            int(power_up.position.y)), power_up.radius, 0)
     # obstacles
     for ob in obstacles:
         pygame.draw.circle(surf, ob.color, (int(ob.position.x), \
@@ -188,9 +192,7 @@ def DrawWorld(surf, BACKGROUND, player, enemy, obstacles, power_up):
     # enemy
     pygame.draw.circle(surf, enemy.color, (int(enemy.position.x), \
         int(enemy.position.y)), enemy.radius, 0)
-    if power_up.available:
-        pygame.draw.circle(surf, power_up.color, (int(power_up.position.x), \
-            int(power_up.position.y)), power_up.radius, 0)
+
 
 def WorldUpdate(surf, player, enemy, obstacles, power_up):
     for ob in obstacles:
@@ -228,8 +230,6 @@ def collision(player, enemy, obstacles):
             return True
     return False
 
-
-
 class obj:
     def __init__(self, position=vector3D(), velocity=vector3D(), \
     acceleration=(), mass=0):
@@ -247,7 +247,6 @@ class obj:
         self.position.x += self.direction.x * speed
         self.position.y += self.direction.y * speed
         self.position.z += self.direction.z * speed
-
 
 class circ(obj):
     def __init__(self, position=vector3D(), velocity=vector3D(), \
@@ -280,7 +279,7 @@ class circ(obj):
 
 class player(obj):
     def __init__(self, position=vector3D(), velocity=vector3D(), \
-    acceleration=vector3D(), mass=0, radius=1, speed=0, color=BLACK):
+    acceleration=vector3D(), mass=0, radius=1, speed=0, color=RED):
         self.position = position
         self.velocity = velocity
         self.acceleration = acceleration
@@ -291,7 +290,7 @@ class player(obj):
         self.speed = speed
         self.color = color
 
-    def update(self, power_up):
+    def update(self):
         self.update_pos(self.speed)
 
     def update_pos(self, speed):
