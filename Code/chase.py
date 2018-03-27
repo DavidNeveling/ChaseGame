@@ -123,10 +123,6 @@ pygame.init()
 
 DISPLAYSURF = pygame.display.set_mode((width, height))
 
-pygame.mixer.init(22050, -16, 2, 4096)
-pygame.mixer.music.load('.Waveshaper - A Picture in Motion.wav')
-pygame.mixer.music.play(0)
-
 pygame.display.set_caption('CHASE!')
 
 MYCOLOR = pygame.Color(10, 100, 255, 255)
