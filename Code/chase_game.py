@@ -33,26 +33,7 @@ def main():
             songs.append(file)
 
 
-    print "Which song would you like in the background?\n"
 
-    for i in range(len(songs)):
-        song_number = i + 1
-        print str(song_number) + ": " + songs[i]
-
-    passed = False
-
-    song_index = raw_input("Enter the number for your choice: ")
-    song = ""
-    while not passed:
-        try:
-            song_index = int(song_index)
-            song = songs[song_index - 1]
-            if song_index > 0 and song_index <= len(songs):
-                passed = True
-            else:
-                song_index = raw_input("Enter the number for your choice: ")
-        except:
-            song_index = raw_input("Enter the number for your choice: ")
 
     response = raw_input("Set screen? (y/n)").lower()
 
@@ -85,11 +66,52 @@ def main():
     except:
         time_log = open("time_log.txt","w+")
 
+    passed = False
+
+    FPS = raw_input("FPS = ")
+    if FPS == "":
+        passed = True
+        FPS = 30
+    while not passed:
+        try:
+            FPS = int(FPS)
+            passed = True
+        except:
+            HEIGHT = raw_input("FPS = ")
+
+    print "Which song would you like in the background?\n"
+
+    for i in range(len(songs)):
+        song_number = i + 1
+        print str(song_number) + ": " + songs[i]
+
+    passed = False
+
+    song_index = raw_input("Enter the number for your choice: ")
+    song = ""
+    if song_index == "":
+        passed = True
+        song = ".ChaseGameMusic.wav"
+    while not passed:
+        try:
+            song_index = int(song_index)
+            song = songs[song_index - 1]
+            if song_index > 0 and song_index <= len(songs):
+                passed = True
+            else:
+                song_index = raw_input("Enter the number for your choice: ")
+        except:
+            song_index = raw_input("Enter the number for your choice: ")
+
     # prior to fps counter
     # GLOBAL_SPEED_MODIFIER = (WIDTH * HEIGHT) / 120000
     # 30 fps, high difficulty 60
     # GLOBAL_SPEED_MODIFIER = (WIDTH * HEIGHT) / 12000
-    GLOBAL_SPEED_MODIFIER = (WIDTH * HEIGHT) / 18000
+    # current 60 = 18000
+    # current 15 = 24000
+    fps_scale = 2400 * math.sqrt(FPS)
+    GLOBAL_SPEED_MODIFIER = (WIDTH * HEIGHT) / fps_scale
+
     obstacle_scale = 8000
     num_obstacles = (WIDTH * HEIGHT) / obstacle_scale
 
@@ -217,7 +239,7 @@ def main():
             pygame.display.set_caption('CHASE! %5f' % (time.time() - run_time))
             WorldUpdate(DISPLAYSURF, PLAYER, ENEMY, obstacles, POWER_UP)
 
-        pygame.time.Clock().tick(60)
+        pygame.time.Clock().tick(FPS)
 
 def ExitGame(surf, times_list, log):
     surf.fill(WHITE)
