@@ -1,4 +1,4 @@
-import pygame, sys, math, random, time
+import pygame, sys, math, random, time, re, os
 from pygame.locals import *
 from vector3D import vector3D
 
@@ -22,6 +22,37 @@ def main():
     global HEIGHT
     global GAMEOVER
     global BACKGROUND
+
+    # get sounds files in dir
+    songs = []
+    WAV = re.compile(".+\.wav")
+    OGG = re.compile(".+\.ogg")
+    MP3 = re.compile(".+\.mp3")
+    for file in os.listdir("."):
+        if WAV.match(file) or OGG.match(file) or MP3.match(file):
+            songs.append(file)
+
+    print "Which song would you like in the background?\n"
+
+    for i in range(len(songs)):
+        song_number = i + 1
+        print str(song_number) + ": " + songs[i]
+
+    passed = False
+
+    song_index = raw_input("Enter the number for your choice: ")
+    song = ""
+    while not passed:
+        try:
+            song_index = int(song_index)
+            song = songs[song_index - 1]
+            if song_index > 0 and song_index <= len(songs):
+                passed = True
+            else:
+                song_index = raw_input("Enter the number for your choice: ")
+        except:
+            song_index = raw_input("Enter the number for your choice: ")
+
     response = raw_input("Set screen? (y/n)").lower()
 
     if response == "y":
@@ -69,7 +100,8 @@ def main():
     pygame.display.set_caption('CHASE!')
 
     pygame.mixer.init(22050, -16, 2, 4096)
-    pygame.mixer.music.load('.ChaseGameMusic.wav')
+
+    pygame.mixer.music.load(song)
     pygame.mixer.music.play(0)
 
     # DrawWorld(DISPLAYSURF, BACKGROUND, PLAYER, ENEMY, obstacles, power_up)
