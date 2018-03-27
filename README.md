@@ -11,3 +11,8 @@ I kept the old chase.py file just as a reference, but I made a new file, chase_g
 3/27/18
 
 Title pretty much says it. I haven't felt like adding UI for a title screen yet, so right now it's a bunch of terminal prompts. And ideally I'll add a "HERE'S YOUR HIGH SCORES" screen or something at the gameover screen, but for now all scores are stored in a text file.
+## Executable Files
+3/27/18
+
+I ran pyinstaller so I could have an executable run what I have so far. Although I ran in to trouble when I tried to move the file around, so I wrote some C that would exec that file from the Game folder.
+
