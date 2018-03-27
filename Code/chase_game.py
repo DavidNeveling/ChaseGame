@@ -32,6 +32,7 @@ def main():
         if WAV.match(file) or OGG.match(file) or MP3.match(file):
             songs.append(file)
 
+
     print "Which song would you like in the background?\n"
 
     for i in range(len(songs)):
@@ -77,8 +78,18 @@ def main():
             except:
                 HEIGHT = raw_input("Height = ")
 
-    GLOBAL_SPEED_MODIFIER = (WIDTH * HEIGHT) / 120000
+    # user_name = raw_input("What is your username? ")
+    # time_log = open(user_name + "_time_log.txt","w+")
+    try:
+        time_log = open("time_log.txt","r+")
+    except:
+        time_log = open("time_log.txt","w+")
 
+    # prior to fps counter
+    # GLOBAL_SPEED_MODIFIER = (WIDTH * HEIGHT) / 120000
+    # 30 fps, high difficulty 60
+    # GLOBAL_SPEED_MODIFIER = (WIDTH * HEIGHT) / 12000
+    GLOBAL_SPEED_MODIFIER = (WIDTH * HEIGHT) / 18000
     obstacle_scale = 8000
     num_obstacles = (WIDTH * HEIGHT) / obstacle_scale
 
@@ -106,8 +117,16 @@ def main():
 
     # DrawWorld(DISPLAYSURF, BACKGROUND, PLAYER, ENEMY, obstacles, power_up)
     enemy_speed_up = time.time()
+
     power_up_spawn = time.time()
     power_up_respawn = random.randrange(7, 14)
+
+    run_time = time.time()
+
+    times_list = []
+
+    time_add = False
+
     while True:
 
         DrawWorld(DISPLAYSURF, BACKGROUND, PLAYER, ENEMY, obstacles, POWER_UP)
@@ -130,19 +149,22 @@ def main():
                 power_up_spawn = cur_time
                 power_up_respawn = random.randrange(7, 14)
 
+        if GAMEOVER and not time_add:
+            times_list.append(time.time() - run_time)
+            time_add = True
+            print times_list
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
+                ExitGame(DISPLAYSURF, times_list, time_log)
 
             pressed = pygame.key.get_pressed()
 
             if pressed[pygame.K_ESCAPE]:
-                DISPLAYSURF.fill(WHITE)
-                pygame.quit()
-                sys.exit()
+                ExitGame(DISPLAYSURF, times_list, time_log)
 
             if GAMEOVER:
+
                 if pressed[pygame.K_RETURN]:
                     # reset everything to initial world start
                     obstacles = loadCircles(num_obstacles, GLOBAL_SPEED_MODIFIER)
@@ -152,28 +174,30 @@ def main():
                     ENEMY.position.y = HEIGHT
                     PLAYER.velocity = vector3D()
                     BACKGROUND = GREEN
-                    pygame.display.set_caption('CHASE!')
                     enemy_speed_up = time.time()
                     ENEMY.speed = .2 * GLOBAL_SPEED_MODIFIER
                     POWER_UP.available = False
                     power_up_spawn = time.time()
                     power_up_respawn = random.randrange(7, 14)
+                    run_time = time.time()
+                    time_add = False
+                    pygame.display.set_caption('CHASE! %10f' % (time.time() - run_time))
                     GAMEOVER = False
 
             if not GAMEOVER:
-                if pressed[pygame.K_UP]:
+                if pressed[pygame.K_UP] or pressed[pygame.K_w]:
                     up = True
                 else:
                     up = False
-                if pressed[pygame.K_DOWN]:
+                if pressed[pygame.K_DOWN] or pressed[pygame.K_s]:
                     down = True
                 else:
                     down = False
-                if pressed[pygame.K_LEFT]:
+                if pressed[pygame.K_LEFT] or pressed[pygame.K_a]:
                     left = True
                 else:
                     left = False
-                if pressed[pygame.K_RIGHT]:
+                if pressed[pygame.K_RIGHT] or pressed[pygame.K_d]:
                     right = True
                 else:
                     right = False
@@ -190,7 +214,34 @@ def main():
             if left:
                 PLAYER.velocity.x += -1
 
+            pygame.display.set_caption('CHASE! %5f' % (time.time() - run_time))
             WorldUpdate(DISPLAYSURF, PLAYER, ENEMY, obstacles, POWER_UP)
+
+        pygame.time.Clock().tick(60)
+
+def ExitGame(surf, times_list, log):
+    surf.fill(WHITE)
+    for line in log:
+        time_val = 0
+        is_val = True
+        try:
+            time_val = float(line)
+        except:
+            is_val = False
+
+        if is_val and time_val not in times_list:
+            times_list.append(time_val)
+
+    log = open("time_log.txt", "r+")
+
+    list_index = 1
+    times_list = sorted(times_list)
+    while list_index <= 10 and list_index <= len(times_list):
+        log.write(str(times_list[-(list_index)]) + "\n")
+        list_index += 1
+    log.close()
+    pygame.quit()
+    sys.exit()
 
 def loadCircles(num_obstacles, GLOBAL_SPEED_MODIFIER):
     list = []
