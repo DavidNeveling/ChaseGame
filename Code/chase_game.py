@@ -114,8 +114,10 @@ def main():
 
     obstacles = loadCircles(num_obstacles, GLOBAL_SPEED_MODIFIER)
 
+    player_default = .3
+
     PLAYER = player(vector3D(), vector3D(), vector3D(), 0, 10, \
-                    .4 * GLOBAL_SPEED_MODIFIER)
+                    player_default * GLOBAL_SPEED_MODIFIER)
 
     ENEMY = enemy(vector3D(WIDTH, HEIGHT, 0), vector3D(), vector3D(), \
                     0, 10, .2 * GLOBAL_SPEED_MODIFIER)
@@ -132,14 +134,14 @@ def main():
     pygame.mixer.init(22050, -16, 2, 4096)
 
     pygame.mixer.music.load(song)
-    pygame.mixer.music.play(0)
+    pygame.mixer.music.play(-1)
 
     # DrawWorld(DISPLAYSURF, BACKGROUND, PLAYER, ENEMY, obstacles, power_up)
     enemy_speed_up = time.time()
 
     power_up_spawn = time.time()
-    power_up_fast = 4
-    power_up_slow = 8
+    power_up_fast = 3
+    power_up_slow = 6
     power_up_respawn = random.randrange(power_up_fast, power_up_slow)
 
     run_time = time.time()
@@ -151,9 +153,6 @@ def main():
     while True:
 
         DrawWorld(DISPLAYSURF, BACKGROUND, PLAYER, ENEMY, obstacles, POWER_UP)
-
-        if not pygame.mixer.music.get_busy():
-            pygame.mixer.music.play(0)
 
         cur_time = time.time()
         if cur_time > enemy_speed_up + 10:
@@ -193,6 +192,7 @@ def main():
                     ENEMY.position.x = WIDTH
                     ENEMY.position.y = HEIGHT
                     PLAYER.velocity = vector3D()
+                    PLAYER.update_speed(player_default * GLOBAL_SPEED_MODIFIER)
                     BACKGROUND = GREEN
                     enemy_speed_up = time.time()
                     ENEMY.speed = .2 * GLOBAL_SPEED_MODIFIER
@@ -235,7 +235,8 @@ def main():
                 PLAYER.velocity.x += -1
 
             pygame.display.set_caption('CHASE! %5f' % (time.time() - run_time))
-            WorldUpdate(DISPLAYSURF, PLAYER, ENEMY, obstacles, POWER_UP, (time.time() - run_time))
+            WorldUpdate(DISPLAYSURF, PLAYER, ENEMY, obstacles, POWER_UP, \
+                (time.time() - run_time), GLOBAL_SPEED_MODIFIER)
 
         pygame.time.Clock().tick(FPS)
 
@@ -297,7 +298,7 @@ def DrawWorld(surf, BACKGROUND, player, enemy, obstacles, power_up):
         int(enemy.position.y)), enemy.radius, 0)
 
 
-def WorldUpdate(surf, player, enemy, obstacles, power_up, run_time):
+def WorldUpdate(surf, player, enemy, obstacles, power_up, run_time, GLOBAL_SPEED_MODIFIER):
     for ob in obstacles:
         ob.update()
     player.update()
@@ -306,8 +307,7 @@ def WorldUpdate(surf, player, enemy, obstacles, power_up, run_time):
         distance = math.sqrt((player.position.x - power_up.position.x)**2 \
                 + (player.position.y - power_up.position.y)**2)
         if distance < player.radius + power_up.radius: # collision
-            global GLOBAL_SPEED_MODIFIER
-            player.speed += .15 * GLOBAL_SPEED_MODIFIER
+            player.update_speed(player.speed + (.025 * GLOBAL_SPEED_MODIFIER))
             power_up.available = False
         power_up.update()
     global GAMEOVER
@@ -329,7 +329,7 @@ def collision(player, enemy, obstacles):
         d_x = player.position.x - obstacle.position.x
         d_y = player.position.y - obstacle.position.y
         distance = math.sqrt(d_x * d_x + d_y * d_y)
-        if distance < player.radius + obstacle.radius: # collision
+        if distance < player.radius + obstacle.radius - 1: # collision
             return True
     return False
 
@@ -380,7 +380,7 @@ class circ(obj):
         if self.position.y < 0:
             self.position.y = 0
 
-class player(obj):
+class player(circ):
     def __init__(self, position=vector3D(), velocity=vector3D(), \
     acceleration=vector3D(), mass=0, radius=1, speed=0, color=RED):
         self.position = position
@@ -394,9 +394,12 @@ class player(obj):
         self.color = color
 
     def update(self):
-        self.update_pos(self.speed)
+        self.update_pos()
 
-    def update_pos(self, speed):
+    def update_speed(self, val):
+        self.speed = val
+
+    def update_pos(self):
         self.direction = self.velocity.unit_vector()
         self.position.x += self.direction.x * self.speed
         self.position.y -= self.direction.y * self.speed
@@ -424,13 +427,13 @@ class enemy(circ):
 
     def update(self, player):
         self.update_velocity(player)
-        self.update_pos(self.speed)
+        self.update_pos()
 
     def update_velocity(self, player):
         self.velocity = player.position - self.position
         self.direction = self.velocity.unit_vector()
 
-    def update_pos(self, speed):
+    def update_pos(self):
         self.position.x += self.direction.x * self.speed
         self.position.y += self.direction.y * self.speed
         if self.position.x > WIDTH:
