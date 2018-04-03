@@ -93,6 +93,7 @@ def main():
     # GLOBAL_SPEED_MODIFIER = (WIDTH * HEIGHT) / 12000
     # current 60 = 18000
     # current 15 = 24000
+
     FPS = 30
 
     fps_scale = 2400 * int(math.sqrt(FPS))
@@ -108,8 +109,8 @@ def main():
     PLAYER = player(vector3D(), vector3D(), vector3D(), 0, 10, \
                     player_default * GLOBAL_SPEED_MODIFIER)
 
-    ENEMY = enemy(vector3D(WIDTH, HEIGHT, 0), vector3D(), vector3D(), \
-                    0, 10, .2 * GLOBAL_SPEED_MODIFIER)
+    ENEMY = player(vector3D(WIDTH, HEIGHT, 0), vector3D(), vector3D(), \
+                    0, 10, .2 * GLOBAL_SPEED_MODIFIER, BLACK)
 
     POWER_UP = power_up(vector3D(), vector3D(), vector3D(), 0, 8, .05, YELLOW)
 
@@ -194,34 +195,60 @@ def main():
                     GAMEOVER = False
 
             if not GAMEOVER:
-                if pressed[pygame.K_UP] or pressed[pygame.K_w]:
-                    up = True
+                if pressed[pygame.K_UP]:
+                    e_up = True
                 else:
-                    up = False
-                if pressed[pygame.K_DOWN] or pressed[pygame.K_s]:
-                    down = True
+                    e_up = False
+                if pressed[pygame.K_DOWN]:
+                    e_down = True
                 else:
-                    down = False
-                if pressed[pygame.K_LEFT] or pressed[pygame.K_a]:
-                    left = True
+                    e_down = False
+                if pressed[pygame.K_LEFT]:
+                    e_left = True
                 else:
-                    left = False
-                if pressed[pygame.K_RIGHT] or pressed[pygame.K_d]:
-                    right = True
+                    e_left = False
+                if pressed[pygame.K_RIGHT]:
+                    e_right = True
                 else:
-                    right = False
+                    e_right = False
+                if pressed[pygame.K_w]:
+                    p_up = True
+                else:
+                    p_up = False
+                if pressed[pygame.K_s]:
+                    p_down = True
+                else:
+                    p_down = False
+                if pressed[pygame.K_a]:
+                    p_left = True
+                else:
+                    p_left = False
+                if pressed[pygame.K_d]:
+                    p_right = True
+                else:
+                    p_right = False
 
         if not GAMEOVER:
             PLAYER.velocity.x = 0
             PLAYER.velocity.y = 0
-            if up:
+            ENEMY.velocity.x = 0
+            ENEMY.velocity.y = 0
+            if p_up:
                 PLAYER.velocity.y += 1
-            if down:
+            if p_down:
                 PLAYER.velocity.y += -1
-            if right:
+            if p_right:
                 PLAYER.velocity.x += 1
-            if left:
+            if p_left:
                 PLAYER.velocity.x += -1
+            if e_up:
+                ENEMY.velocity.y += 1
+            if e_down:
+                ENEMY.velocity.y += -1
+            if e_right:
+                ENEMY.velocity.x += 1
+            if e_left:
+                ENEMY.velocity.x += -1
 
             pygame.display.set_caption('CHASE! %5f' % (time.time() - run_time))
             WorldUpdate(DISPLAYSURF, PLAYER, ENEMY, obstacles, POWER_UP, \
@@ -231,7 +258,6 @@ def main():
 
 def ExitGame(surf, times_list, log):
     surf.fill(WHITE)
-    print "Extracting from time log"
     for line in log:
         time_val = 0
         is_val = True
@@ -247,12 +273,10 @@ def ExitGame(surf, times_list, log):
 
     list_index = 1
     times_list = sorted(times_list)
-    print "Saving to log"
     while list_index <= 10 and list_index <= len(times_list):
         log.write(str(times_list[-(list_index)]) + "\n")
         list_index += 1
     log.close()
-    print "Log saved"
     pygame.quit()
     sys.exit()
 
@@ -294,7 +318,7 @@ def WorldUpdate(surf, player, enemy, obstacles, power_up, run_time, GLOBAL_SPEED
     for ob in obstacles:
         ob.update()
     player.update()
-    enemy.update(player)
+    enemy.update()
     if power_up.available:
         distance = math.sqrt((player.position.x - power_up.position.x)**2 \
                 + (player.position.y - power_up.position.y)**2)
@@ -305,8 +329,8 @@ def WorldUpdate(surf, player, enemy, obstacles, power_up, run_time, GLOBAL_SPEED
     global GAMEOVER
     global BACKGROUND
     if collision(player, enemy, obstacles):
-        print "PLAYER: " + str(player.speed)
-        print "ENEMY: " + str(enemy.speed)
+        # print "PLAYER: " + str(player.speed)
+        # print "ENEMY: " + str(enemy.speed)
         BACKGROUND = WHITE
         GAMEOVER = True
         pygame.display.set_caption('GAMEOVER! %5f  Press ENTER to restart' % (run_time))
@@ -329,7 +353,7 @@ def collision(player, enemy, obstacles):
 
 class obj:
     def __init__(self, position=vector3D(), velocity=vector3D(), \
-    acceleration=vector3D(), mass=0):
+    acceleration=(), mass=0):
         self.position = position
         self.velocity = velocity
         self.acceleration = acceleration

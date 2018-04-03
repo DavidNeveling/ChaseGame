@@ -16,6 +16,7 @@ HEIGHT = 300
 GAMEOVER = False
 BACKGROUND = GREEN
 GLOBAL_SPEED_MODIFIER = 0
+RESTITUTION = 1.3
 
 def main():
     global WIDTH
@@ -94,7 +95,6 @@ def main():
     # current 60 = 18000
     # current 15 = 24000
     FPS = 30
-
     fps_scale = 2400 * int(math.sqrt(FPS))
     GLOBAL_SPEED_MODIFIER = (WIDTH * HEIGHT) / fps_scale
 
@@ -108,8 +108,8 @@ def main():
     PLAYER = player(vector3D(), vector3D(), vector3D(), 0, 10, \
                     player_default * GLOBAL_SPEED_MODIFIER)
 
-    ENEMY = enemy(vector3D(WIDTH, HEIGHT, 0), vector3D(), vector3D(), \
-                    0, 10, .2 * GLOBAL_SPEED_MODIFIER)
+    enemy_list = [enemy(vector3D(WIDTH, HEIGHT, 0), vector3D(), vector3D(), \
+                    0, 10, .2 * GLOBAL_SPEED_MODIFIER)]
 
     POWER_UP = power_up(vector3D(), vector3D(), vector3D(), 0, 8, .05, YELLOW)
 
@@ -127,6 +127,8 @@ def main():
 
     # DrawWorld(DISPLAYSURF, BACKGROUND, PLAYER, ENEMY, obstacles, power_up)
     enemy_speed_up = time.time()
+    enemy_spawn_rate = 10
+    enemy_spawn_time = time.time()
 
     power_up_spawn = time.time()
     power_up_fast = 3
@@ -141,12 +143,18 @@ def main():
 
     while True:
 
-        DrawWorld(DISPLAYSURF, BACKGROUND, PLAYER, ENEMY, obstacles, POWER_UP)
+        DrawWorld(DISPLAYSURF, BACKGROUND, PLAYER, enemy_list, obstacles, POWER_UP)
 
         cur_time = time.time()
         if cur_time > enemy_speed_up + 10:
             enemy_speed_up = cur_time
-            ENEMY.speed += .05 * GLOBAL_SPEED_MODIFIER
+            for e in enemy_list:
+                e.speed += .05 * GLOBAL_SPEED_MODIFIER
+
+        if cur_time > enemy_spawn_time + enemy_spawn_rate:
+            enemy_spawn_time = cur_time
+            enemy_list.append(enemy(vector3D(WIDTH, HEIGHT, 0), vector3D(), vector3D(), \
+                            0, 10, .2 * GLOBAL_SPEED_MODIFIER))
 
         if not POWER_UP.available:
             if cur_time > power_up_spawn + power_up_respawn:
@@ -175,16 +183,17 @@ def main():
 
                 if pressed[pygame.K_RETURN]:
                     # reset everything to initial world start
-                    obstacles = loadCircles(num_obstacles, GLOBAL_SPEED_MODIFIER)
+                    obstacles = loadCircles(num_obstacles, \
+                        GLOBAL_SPEED_MODIFIER)
                     PLAYER.position = vector3D()
                     PLAYER.velocity = vector3D()
-                    ENEMY.position.x = WIDTH
-                    ENEMY.position.y = HEIGHT
+                    enemy_list = [enemy(vector3D(WIDTH, HEIGHT, 0), \
+                        vector3D(), vector3D(), 0, 10, \
+                        .2 * GLOBAL_SPEED_MODIFIER)]
                     PLAYER.velocity = vector3D()
                     PLAYER.update_speed(player_default * GLOBAL_SPEED_MODIFIER)
                     BACKGROUND = GREEN
                     enemy_speed_up = time.time()
-                    ENEMY.speed = .2 * GLOBAL_SPEED_MODIFIER
                     POWER_UP.available = False
                     power_up_spawn = time.time()
                     power_up_respawn = random.randrange(power_up_fast, power_up_slow)
@@ -224,14 +233,13 @@ def main():
                 PLAYER.velocity.x += -1
 
             pygame.display.set_caption('CHASE! %5f' % (time.time() - run_time))
-            WorldUpdate(DISPLAYSURF, PLAYER, ENEMY, obstacles, POWER_UP, \
+            WorldUpdate(DISPLAYSURF, PLAYER, enemy_list, obstacles, POWER_UP, \
                 (time.time() - run_time), GLOBAL_SPEED_MODIFIER)
 
         pygame.time.Clock().tick(FPS)
 
 def ExitGame(surf, times_list, log):
     surf.fill(WHITE)
-    print "Extracting from time log"
     for line in log:
         time_val = 0
         is_val = True
@@ -247,12 +255,10 @@ def ExitGame(surf, times_list, log):
 
     list_index = 1
     times_list = sorted(times_list)
-    print "Saving to log"
     while list_index <= 10 and list_index <= len(times_list):
         log.write(str(times_list[-(list_index)]) + "\n")
         list_index += 1
     log.close()
-    print "Log saved"
     pygame.quit()
     sys.exit()
 
@@ -272,7 +278,7 @@ def loadCircles(num_obstacles, GLOBAL_SPEED_MODIFIER):
         list.append(o)
     return list
 
-def DrawWorld(surf, BACKGROUND, player, enemy, obstacles, power_up):
+def DrawWorld(surf, BACKGROUND, player, enemy_list, obstacles, power_up):
     surf.fill(BACKGROUND)
     # player
     pygame.draw.circle(surf, player.color, (int(player.position.x), \
@@ -286,15 +292,22 @@ def DrawWorld(surf, BACKGROUND, player, enemy, obstacles, power_up):
         pygame.draw.circle(surf, ob.color, (int(ob.position.x), \
             int(ob.position.y)), ob.radius, 0)
     # enemy
-    pygame.draw.circle(surf, enemy.color, (int(enemy.position.x), \
-        int(enemy.position.y)), enemy.radius, 0)
+    for e in enemy_list:
+        pygame.draw.circle(surf, e.color, (int(e.position.x), \
+            int(e.position.y)), e.radius, 0)
 
 
-def WorldUpdate(surf, player, enemy, obstacles, power_up, run_time, GLOBAL_SPEED_MODIFIER):
+def WorldUpdate(surf, player, enemy_list, obstacles, power_up, run_time, GLOBAL_SPEED_MODIFIER):
+    i = 1
     for ob in obstacles:
+        print
+        print str(i) + ": " + str(ob.velocity)
+        print
         ob.update()
+        i += 1
     player.update()
-    enemy.update(player)
+    for e in enemy_list:
+        e.update(player)
     if power_up.available:
         distance = math.sqrt((player.position.x - power_up.position.x)**2 \
                 + (player.position.y - power_up.position.y)**2)
@@ -304,32 +317,53 @@ def WorldUpdate(surf, player, enemy, obstacles, power_up, run_time, GLOBAL_SPEED
         power_up.update()
     global GAMEOVER
     global BACKGROUND
-    if collision(player, enemy, obstacles):
-        print "PLAYER: " + str(player.speed)
-        print "ENEMY: " + str(enemy.speed)
+    if collision(player, enemy_list, obstacles):
         BACKGROUND = WHITE
         GAMEOVER = True
         pygame.display.set_caption('GAMEOVER! %5f  Press ENTER to restart' % (run_time))
-        DrawWorld(surf, BACKGROUND, player, enemy, obstacles, power_up)
+        DrawWorld(surf, BACKGROUND, player, enemy_list, obstacles, power_up)
     pygame.display.update()
 
-def collision(player, enemy, obstacles):
-    distance = math.sqrt((player.position.x - enemy.position.x)**2 + \
-                            (player.position.y - enemy.position.y)**2)
-    if distance < player.radius + enemy.radius: # collision
-        return True
-
-    for obstacle in obstacles:
-        d_x = player.position.x - obstacle.position.x
-        d_y = player.position.y - obstacle.position.y
-        distance = math.sqrt(d_x * d_x + d_y * d_y)
-        if distance < player.radius + obstacle.radius - 1: # collision
+def collision(player, enemy_list, obstacles):
+    for e in enemy_list:
+        distance = math.sqrt((player.position.x - e.position.x)**2 + \
+                                (player.position.y - e.position.y)**2)
+        if distance < player.radius + e.radius: # collision
             return True
+
+    for i in range(len(obstacles)):
+        d_x = player.position.x - obstacles[i].position.x
+        d_y = player.position.y - obstacles[i].position.y
+        distance = math.sqrt(d_x * d_x + d_y * d_y)
+        if distance < player.radius + obstacles[i].radius - 1: # collision
+            return True
+        '''
+        for j in range(i+1, len(obstacles)):
+            d_x = obstacles[i].position.x - obstacles[j].position.x
+            d_y = obstacles[i].position.y - obstacles[j].position.y
+            distance = math.sqrt(d_x * d_x + d_y * d_y)
+            if distance < obstacles[i].radius + obstacles[j].radius:
+                vop = obstacles[i].velocity
+                nvop = obstacles[i].velocity * -1
+                porj = obstacles[i].velocity.projection(obstacles[j].velocity)
+                obstacles[i].velocity = ((obstacles[i].velocity) + \
+                    obstacles[j].velocity.projection(obstacles[i].velocity) * -2)
+                obstacles[i].velocity = obstacles[i].velocity
+
+                obstacles[j].velocity = ((obstacles[j].velocity) + \
+                    obstacles[i].velocity.projection(obstacles[j].velocity) * -2)
+
+                obstacles[i].update()
+                obstacles[j].update()
+                obstacles[i].velocity = obstacles[i].direction
+                obstacles[j].velocity = obstacles[j].direction
+        '''
+
     return False
 
 class obj:
     def __init__(self, position=vector3D(), velocity=vector3D(), \
-    acceleration=vector3D(), mass=0):
+    acceleration=(), mass=0):
         self.position = position
         self.velocity = velocity
         self.acceleration = acceleration
@@ -452,10 +486,12 @@ class obstacle(circ):
         self.speed = speed
         self.color = color
 
-    def update(self):
-        self.update_pos()
+    def update(self, speed=-1):
+        if speed == -1:
+            speed = self.speed
+        self.update_pos(speed)
 
-    def update_pos(self):
+    def update_pos(self, speed):
         if self.position.x + self.radius > WIDTH or \
             self.position.x - self.radius < 0:
             self.velocity.x = self.velocity.x * -1
@@ -463,8 +499,8 @@ class obstacle(circ):
             self.position.y - self.radius < 0:
             self.velocity.y = self.velocity.y * -1
         self.direction = self.velocity.unit_vector()
-        self.position.x += self.direction.x * self.speed
-        self.position.y += self.direction.y * self.speed
+        self.position.x += self.direction.x * speed
+        self.position.y += self.direction.y * speed
 
 class power_up(circ):
     def __init__(self, position=vector3D(), velocity=vector3D(), \
