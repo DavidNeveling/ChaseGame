@@ -16,6 +16,7 @@ HEIGHT = 300
 GAMEOVER = False
 BACKGROUND = GREEN
 GLOBAL_SPEED_MODIFIER = 0
+MUTE = True
 
 def main():
     global WIDTH
@@ -63,29 +64,30 @@ def main():
     except:
         time_log = open("time_log.txt","w+")
 
-    print "Which song would you like in the background?\n"
+    if not MUTE:
+        print "Which song would you like in the background?\n"
 
-    for i in range(len(songs)):
-        song_number = i + 1
-        print str(song_number) + ": " + songs[i]
+        for i in range(len(songs)):
+            song_number = i + 1
+            print str(song_number) + ": " + songs[i]
 
-    passed = False
+        passed = False
 
-    song_index = raw_input("Enter the number for your choice: ")
-    song = ""
-    if song_index == "":
-        passed = True
-        song = ".ChaseGameMusic.wav"
-    while not passed:
-        try:
-            song_index = int(song_index)
-            song = songs[song_index - 1]
-            if song_index > 0 and song_index <= len(songs):
-                passed = True
-            else:
+        song_index = raw_input("Enter the number for your choice: ")
+        song = ""
+        if song_index == "":
+            passed = True
+            song = ".ChaseGameMusic.wav"
+        while not passed:
+            try:
+                song_index = int(song_index)
+                song = songs[song_index - 1]
+                if song_index > 0 and song_index <= len(songs):
+                    passed = True
+                else:
+                    song_index = raw_input("Enter the number for your choice: ")
+            except:
                 song_index = raw_input("Enter the number for your choice: ")
-        except:
-            song_index = raw_input("Enter the number for your choice: ")
 
     # prior to fps counter
     # GLOBAL_SPEED_MODIFIER = (WIDTH * HEIGHT) / 120000
@@ -120,10 +122,11 @@ def main():
     DISPLAYSURF = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption('CHASE!')
 
-    pygame.mixer.init(22050, -16, 2, 4096)
+    if not MUTE:
+        pygame.mixer.init(22050, -16, 2, 4096)
 
-    pygame.mixer.music.load(song)
-    pygame.mixer.music.play(-1)
+        pygame.mixer.music.load(song)
+        pygame.mixer.music.play(-1)
 
     # DrawWorld(DISPLAYSURF, BACKGROUND, PLAYER, ENEMY, obstacles, power_up)
     enemy_speed_up = time.time()
