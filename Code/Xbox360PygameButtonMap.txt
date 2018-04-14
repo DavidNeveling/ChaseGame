@@ -1,0 +1,24 @@
+Num Axis: 6 
+	Axis 0 = Left/Right on Left Analog Stick
+	Axis 1 = Up/Down on Left Analog Stick (-1 is up)
+	Axis 2 = Left Trigger (-1 -> fully up, 1 -> fully down)
+	Axis 3 = Left/Right on Right Analog Stick
+	Axis 4 = Up/Down on Right Analog Stick (-1 is up)
+	Axis 5 = Right Trigger (-1 -> fully up, 1 -> fully down)
+Num Buttons: 11
+	B0 = A
+	B1 = B
+	B2 = X
+	B3 = Y
+	B4 = Left Bumper
+	B5 = Right Bumper
+	B6 = Back
+	B7 = Start
+	B8 = XBox Button
+	B9 = Left Analog Press
+	B10 = Right Analog Press
+Hat: 1 (its the dpad)
+	(-1, 0) = left
+	(1, 0)  = right
+	(0, 1)  = up
+	(0, -1) = down
